@@ -72,7 +72,7 @@ Displays the current bound channels.""")
                         elif len(words) == 2:
                             # non-admin version
                             if await set_colour(author, words[1]):
-                                await channel.send("Set colour of " + author.name + " to " + words[1])
+                                await channel.send("Set color of " + author.name + " to " + words[1])
                             else:
                                 await channel.send(fail_text)
                         else:
