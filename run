@@ -1,0 +1,11 @@
+input="pid"
+while IFS=read -r line
+do
+    pid = line
+done < "$input"
+
+rm pid
+kill -9 $pid
+echo $$ > pid
+
+nohup python bot.py &
