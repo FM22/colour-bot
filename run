@@ -9,7 +9,7 @@ set -- $args
 for i
 do
   case "$i" in
-        -u) git pull origin master
+        -u) git pull origin main
   esac
 done
 
