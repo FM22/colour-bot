@@ -2,7 +2,6 @@ pid=`cat pid`
 > pid
 > nohup.out
 kill -9 $pid
-echo $$ > pid
 
 args=`getopt :u $*`
 set -- $args
@@ -13,4 +12,4 @@ do
   esac
 done
 
-sh -c 'exec nohup python3 bot.py &'
+sh -c 'echo $$ > pid; exec nohup python3 bot.py &'
