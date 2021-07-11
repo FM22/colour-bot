@@ -1,22 +1,16 @@
 import discord
 import os
 import dotenv
-import asyncio
-import math
 
 # get secret token from .env file
 dotenv.load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-time_dict = {'s': 1, 'm': 60, 'h': 3600}
-bound_channels = {"im-gonna-do-a-question-for-an-hour", "spam"}
-admin_roles = {"super admin", "artem", "nice person"}
-msg_dict = {"mute": "muted", "blind": "blinded"}
+bound_channels = {"bot-commands"}
+admin_roles = {"admin"}
 admin_commands = {"admin": admin_roles, "channel": bound_channels}
 admin_commands_txt = {"admin": "as an admin role", "channel": "as a bound channel"}
-max_time = 86400
-fail_text = "Could not execute command, try using ;help :slight_smile:"
-
+fail_text = "Could not execute command, try using ;help"
 
 # would really love to avoid having to do this
 intents = discord.Intents.default()
@@ -32,19 +26,16 @@ async def on_ready():
 async def on_message(message):
     author = message.author
     channel = message.channel
+    server = message.guild
 
     # help command
     if not (author.bot or author.system) and message.content == ';help':
-        await author.send("""*User Commands (only work in work/spam channels):*
-**;mute [time][s/m/h]**
-Mutes you for a specified amount of time.
-Only works in the work channel.\n
-**;blind [time][s/m/h]**
-Blinds you for a specified amount of time.
-Only works in the work channel.\n
+        await author.send("""*User Commands:*
+**;colour [hexcode]**
+Sets your colour on the server to the specified hexcode. Only works in #bot-commands.\n
 *Admin only commands:*
-**;clear [@user1] [@user2] ...**
-Unmutes and unblinds specified users.\n
+**;colour [@user] [hexcode]**
+Sets the specified user's colour to the specified hexcode.\n
 **;admin [add/remove] [role name]**
 Adds or removes the specified role as an admin role for this bot.\n
 **;admin display**
@@ -52,15 +43,10 @@ Displays the current admin roles.\n
 **;channel [add/remove] [channel name]**
 Adds or removes the specified channel as a usable channel for the mute and blind commands\n
 **;channel display**
-Displays the current bound channels.\n
-**;maxtime [set] [time][s/m/h]**
-Sets the maximum mute/blind time.\n
-**;maxtime display**
-Displays the current maximum mute/blind time.""")
+Displays the current bound channels.""")
         return
 
     if type(channel).__name__ == "TextChannel" and type(author).__name__ == "Member":
-        global max_time
         is_admin = set([r.name for r in author.roles]).intersection(admin_roles) or author.permissions_in(channel).administrator
 
         # other commands
@@ -69,37 +55,31 @@ Displays the current maximum mute/blind time.""")
             if text[0] == ";":
                 try:
                     #get role to add
-                    roleDict = {"mute": discord.utils.get(message.guild.roles, name="muted"), "blind": discord.utils.get(message.guild.roles, name="blind")}
                     words = text[1:].split(" ")
-
-                    # mute/blind command
-                    if words[0] in roleDict.keys():
-                        new_role = roleDict[words[0]]
-                        time = getTimeVal(words[1])
-                        if time != -1:
-                            time = min(time, max_time)
-                            await author.add_roles(new_role)
-                            await channel.send(msg_dict[words[0]].title() + " " + author.name + " for " + getTimeStr(time))
-                            await asyncio.sleep(time)
-
-                            # fuckery needed to get updated roles after wait
-                            if new_role in discord.utils.get(message.guild.members, id = author.id).roles:
-                                await author.remove_roles(new_role)
-                                await channel.send(author.name + " is back!")
-                            return
+                    
+                    # colour-setting command
+                    if words[0] == 'colour':
+                        if len(words) == 3:
+                            # admin version
+                            if is_admin and len(message.mentions) == 1 and words[1][0] == '<':
+                                target = message.mentions[0]
+                                if await set_colour(target, words[2]):
+                                    await channel.send("Set colour of " + target.name + " to " + words[2])
+                                else:
+                                    await channel.send(fail_text)
+                            else:
+                                await channel.send(fail_text)
+                        elif len(words) == 2:
+                            # non-admin version
+                            if await set_colour(author, words[1]):
+                                await channel.send("Set colour of " + author.name + " to " + words[1])
+                            else:
+                                await channel.send(fail_text)
                         else:
                             await channel.send(fail_text)
 
                     # admin-only commands
                     if is_admin:
-                        if words[0] == "clear":
-                            savedUsers = message.mentions
-                            for u in savedUsers:
-                                await u.remove_roles(roleDict["mute"])
-                                await u.remove_roles(roleDict["blind"])
-                            await channel.send(author.name + " force cleared " + "".join([(u.name + ", ") for u in savedUsers[:-1]]) + (" and " if len(savedUsers) > 1 else "") + savedUsers[-1].name)
-                            return
-
                         if words[0] in admin_commands.keys():
                             if words[1] == "add":
                                 admin_commands[words[0]].add(words[2])
@@ -110,36 +90,49 @@ Displays the current maximum mute/blind time.""")
                             elif words[1] == "display":
                                 await channel.send(admin_commands[words[0]])
                             return
-
-                        if words[0] == "maxtime":
-                            if words[1] == "display":
-                                await channel.send("Maximum time is " + getTimeStr(max_time))
-                            elif words[1] == "set":
-                                new_time = getTimeVal(words[2])
-                                if new_time != -1:
-                                    max_time = new_time
-                                    await channel.send("Set max time to " + getTimeStr(new_time))
-                                else:
-                                    await channel.send(fail_text)
-                except:
+                except Exception as e:
+                    print(e)
                     await channel.send(fail_text)
 
-# converts time string into numerical value (-1 if it fails)
-def getTimeVal(timeStr):
-    # need to improve this to read eg 1h30m or 1h 30m
-    if len(timeStr) > 1:
-        base = timeStr[:-1]
-        if base.isdigit():
-            multi = timeStr[-1]
-            time = time_dict.get(multi, 60) * int(base)
-            return time
-    return -1
+async def set_colour(user, hexcode):
+    # try to convert hexcode
+    try:
+        if hexcode[0] == '#':
+            hexcode = hexcode[1:]#
+        c_int = int(hexcode, 16)
 
-# converts number of seconds into time string
-def getTimeStr(time):
-    secs = time % 60
-    mins = math.floor(time/60) % 60
-    hrs = math.floor(time/3600)
-    return str(hrs) + "h " + str(mins) + "m " + str(secs) + "s"
+        # range check
+        if not (c_int >= 0 and c_int <= 16777215):
+            print("failed rangecheck")
+            return False
+
+        # set colour
+        c = discord.Colour(int(hexcode, 16))
+        txt = str(c) # hex code (std formatting)
+    except Exception as e:
+        print(e)
+        return False
+    
+    # enumerate all colour roles
+    found_role = False
+    for r in user.guild.roles:
+        if r.name[0] == '#':
+            if r.name == txt:
+                role = r
+                found_role = True
+            elif user in r.members: # remove old colour role(s)
+                await user.remove_roles(r)
+            
+            # delete unused roles
+            if len(r.members) == 0:
+                await r.delete()
+
+    # create colour role if it doesn't exist
+    if not found_role:
+        role = await user.guild.create_role(name=txt, colour=c)
+
+    # set user colour
+    await user.add_roles(role)
+    return True
 
 client.run(TOKEN)
