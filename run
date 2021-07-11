@@ -8,4 +8,13 @@ rm pid
 kill -9 $pid
 echo $$ > pid
 
+args=`getopt :u $*`
+set -- $args
+for i
+do
+  case "$i" in
+        -u) git pull origin master
+  esac
+done
+
 nohup python bot.py &
