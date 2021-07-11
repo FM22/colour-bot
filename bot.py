@@ -41,7 +41,7 @@ Adds or removes the specified role as an admin role for this bot.\n
 **;admin display**
 Displays the current admin roles.\n
 **;channel [add/remove] [channel name]**
-Adds or removes the specified channel as a usable channel for the mute and blind commands\n
+Adds or removes the specified channel as a usable channel for user commands\n
 **;channel display**
 Displays the current bound channels.""")
         return
