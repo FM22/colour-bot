@@ -1,9 +1,4 @@
-input="pid"
-while IFS=read -r line
-do
-    pid = line
-done < "$input"
-
+pid = `cat pid`
 > pid
 kill -9 $pid
 echo $$ > pid
