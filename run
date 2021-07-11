@@ -1,5 +1,6 @@
 pid=`cat pid`
 > pid
+> nohup.out
 kill -9 $pid
 echo $$ > pid
 
@@ -12,4 +13,4 @@ do
   esac
 done
 
-nohup python3 bot.py &
+sh -c 'exec nohup python3 bot.py &'
