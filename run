@@ -12,4 +12,4 @@ do
   esac
 done
 
-sh -c 'echo $$ > pid; exec nohup python3 bot.py &'
+exec nohup python3 bot.py & echo $! > pid
