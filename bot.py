@@ -7,6 +7,7 @@ dotenv.load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 bound_channels = {"bot-commands"}
+admin_cmd_prefix = "c"
 admin_roles = {"admin"}
 admin_commands = {"admin": admin_roles, "channel": bound_channels}
 admin_commands_txt = {"admin": "as an admin role", "channel": "as a bound channel"}
@@ -80,15 +81,15 @@ Displays the current bound channels.""")
 
                     # admin-only commands
                     if is_admin:
-                        if words[0] in admin_commands.keys():
-                            if words[1] == "add":
-                                admin_commands[words[0]].add(words[2])
-                                await channel.send("Added " + words[2] + " " + admin_commands_txt[words[0]])
-                            elif words[1] == "remove":
-                                admin_commands[words[0]].remove(words[2])
-                                await channel.send("Removed " + words[2] + " " + admin_commands_txt[words[0]])
-                            elif words[1] == "display":
-                                await channel.send(admin_commands[words[0]])
+                        if words[0] == admin_cmd_prefix and words[1] in admin_commands.keys():
+                            if words[2] == "add":
+                                admin_commands[words[1]].add(words[3])
+                                await channel.send("Added " + words[3] + " " + admin_commands_txt[words[1]])
+                            elif words[2] == "remove":
+                                admin_commands[words[1]].remove(words[3])
+                                await channel.send("Removed " + words[3] + " " + admin_commands_txt[words[1]])
+                            elif words[2] == "display":
+                                await channel.send(admin_commands[words[1]])
                             return
                 except Exception as e:
                     print(e)
