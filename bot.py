@@ -37,13 +37,13 @@ Sets your colour on the server to the specified hexcode. Only works in #bot-comm
 *Admin only commands:*
 **;colour [@user] [hexcode]**
 Sets the specified user's colour to the specified hexcode.\n
-**;admin [add/remove] [role name]**
+**;c admin [add/remove] [role name]**
 Adds or removes the specified role as an admin role for this bot.\n
-**;admin display**
+**;c admin display**
 Displays the current admin roles.\n
-**;channel [add/remove] [channel name]**
+**;c channel [add/remove] [channel name]**
 Adds or removes the specified channel as a usable channel for user commands\n
-**;channel display**
+**;c channel display**
 Displays the current bound channels.""")
         return
 
