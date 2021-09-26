@@ -1,6 +1,10 @@
 import discord
 import os
 import dotenv
+import pickle
+
+# set correct working directory
+os.chdir(os.path.dirname(__file__))
 
 # get secret token from .env file
 dotenv.load_dotenv()
@@ -12,6 +16,10 @@ admin_roles = {"admin"}
 admin_commands = {"admin": admin_roles, "channel": bound_channels}
 admin_commands_txt = {"admin": "as an admin role", "channel": "as a bound channel"}
 fail_text = "Could not execute command, try using ;help"
+
+# load settings
+with open("settings") as f:
+    bound_channels, admin_roles = pickle.load(f)
 
 # would really love to avoid having to do this
 intents = discord.Intents.default()
@@ -27,7 +35,6 @@ async def on_ready():
 async def on_message(message):
     author = message.author
     channel = message.channel
-    server = message.guild
 
     # help command
     if not (author.bot or author.system) and message.content == ';help':
@@ -85,9 +92,11 @@ Displays the current bound channels.""")
                             if words[2] == "add":
                                 admin_commands[words[1]].add(words[3])
                                 await channel.send("Added " + words[3] + " " + admin_commands_txt[words[1]])
+                                dump_settings()
                             elif words[2] == "remove":
                                 admin_commands[words[1]].remove(words[3])
                                 await channel.send("Removed " + words[3] + " " + admin_commands_txt[words[1]])
+                                dump_settings()
                             elif words[2] == "display":
                                 await channel.send(admin_commands[words[1]])
                             return
@@ -135,5 +144,9 @@ async def set_colour(user, hexcode):
     # set user colour
     await user.add_roles(role)
     return True
+
+def dump_settings():
+    with open("settings") as f:
+        pickle.dump((bound_channels, admin_roles), f)
 
 client.run(TOKEN)
