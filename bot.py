@@ -17,9 +17,9 @@ admin_commands = {"admin": admin_roles, "channel": bound_channels}
 admin_commands_txt = {"admin": "as an admin role", "channel": "as a bound channel"}
 fail_text = "Could not execute command, try using ;help"
 
-# load settings
-with open("settings") as f:
-    bound_channels, admin_roles = pickle.load(f)
+# # load settings
+# with open("settings") as f:
+#     bound_channels, admin_roles = pickle.load(f)
 
 # would really love to avoid having to do this
 intents = discord.Intents.default()
@@ -125,7 +125,7 @@ async def set_colour(user, hexcode):
     
     # enumerate all colour roles
     found_role = False
-    for r in user.guild.roles:
+    for r in await user.guild.fetch_roles():
         if r.name[0] == '#':
             if r.name == txt:
                 role = r
